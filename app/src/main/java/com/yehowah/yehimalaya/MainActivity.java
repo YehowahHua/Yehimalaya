@@ -104,9 +104,9 @@ public class MainActivity extends FragmentActivity {
         //用于导航的指示器，需要一个适配器
         CommonNavigator commonNavigator = new CommonNavigator(this);
         indicatorAdapter = new IndicatorAdapter(this);
+        commonNavigator.setAdjustMode(true);//自我调节，平分样式，需要clean project
         commonNavigator.setAdapter(indicatorAdapter);
-        commonNavigator.setAdjustMode(true);//自我调节，平分样式
-        magicIndicator.setNavigator(commonNavigator);
+
 
         //ViewPager 需要内容适配器
         FragmentManager supportFragmentManager = getSupportFragmentManager();
@@ -115,6 +115,7 @@ public class MainActivity extends FragmentActivity {
 
 
         //把ViewPager和indicator绑定在一起
+        magicIndicator.setNavigator(commonNavigator);
         ViewPagerHelper.bind(magicIndicator, contentPager);
     }
 }
