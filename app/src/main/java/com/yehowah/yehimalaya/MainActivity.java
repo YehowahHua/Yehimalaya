@@ -1,12 +1,14 @@
 package com.yehowah.yehimalaya;
 
 import android.os.Bundle;
+import android.util.Log;
 
 import com.ximalaya.ting.android.opensdk.datatrasfer.CommonRequest;
 import com.ximalaya.ting.android.opensdk.datatrasfer.IDataCallBack;
 import com.ximalaya.ting.android.opensdk.model.category.Category;
 import com.ximalaya.ting.android.opensdk.model.category.CategoryList;
 import com.yehowah.yehimalaya.adapters.IndicatorAdapter;
+import com.yehowah.yehimalaya.adapters.MainContentAdapter;
 import com.yehowah.yehimalaya.utils.LogUtil;
 
 import net.lucode.hackware.magicindicator.MagicIndicator;
@@ -17,18 +19,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import androidx.appcompat.app.AppCompatActivity;
-import android.support.v4.view.ViewPager;
-//import androidx.viewpager.widget.ViewPager;
+import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
+import androidx.viewpager.widget.ViewPager;
 
 
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends FragmentActivity {
     private static final String TAG = "MainActivity";
 
     private MagicIndicator magicIndicator;
     private ViewPager contentPager;
+
+    private IndicatorAdapter indicatorAdapter;
+
 
 
     @Override
@@ -37,8 +42,24 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         initView();
 
+        initEvent();
 //        testRequestCategory();
 
+
+    }
+
+
+    private void initEvent() {
+        //指示器点击选择事件
+        indicatorAdapter.setOnIndicatorTapClickListener(new IndicatorAdapter.OnIndicatorTapClickListener() {
+            @Override
+            public void onTabClick(int index) {
+                Log.i(TAG, "onTabClick: index is -->" + index);
+                if (contentPager != null){
+                    contentPager.setCurrentItem(index);
+                }
+            }
+        });
 
     }
 
@@ -75,22 +96,25 @@ public class MainActivity extends AppCompatActivity {
 
     private void initView() {
         magicIndicator = (MagicIndicator) findViewById(R.id.magic_indicator3);
-//        contentPager = findViewById(R.id.content_pager);
+        contentPager = (ViewPager) findViewById(R.id.content_pager);
 
-        //背景
+        //背景颜色
         magicIndicator.setBackgroundColor(this.getResources().getColor(R.color.main_color));
 
-        //导航 指示器
+        //用于导航的指示器，需要一个适配器
         CommonNavigator commonNavigator = new CommonNavigator(this);
-        //创建一个指示器 适配器
-        IndicatorAdapter indicatorAdapter = new IndicatorAdapter(this);
+        indicatorAdapter = new IndicatorAdapter(this);
         commonNavigator.setAdapter(indicatorAdapter);
+        commonNavigator.setAdjustMode(true);//自我调节，平分样式
+        magicIndicator.setNavigator(commonNavigator);
+
+        //ViewPager 需要内容适配器
+        FragmentManager supportFragmentManager = getSupportFragmentManager();
+        MainContentAdapter mainContentAdapter = new MainContentAdapter(supportFragmentManager);
+        contentPager.setAdapter(mainContentAdapter);
 
 
         //把ViewPager和indicator绑定在一起
-        magicIndicator.setNavigator(commonNavigator);
         ViewPagerHelper.bind(magicIndicator, contentPager);
-
-
     }
 }
