@@ -21,13 +21,10 @@ public class RecommendPresenter implements IRecommentPresenter {
     private static RecommendPresenter sInstanse = null;
 
     private List<IRecommendViewCallback> mCallbacks = new ArrayList<>();
+
     private RecommendPresenter(){
     }
 
-    /**
-     * 获取单例对象
-     * @return
-     */
     public static RecommendPresenter getInstance(){
         if (sInstanse == null){
             synchronized (RecommendPresenter.class){
@@ -37,12 +34,12 @@ public class RecommendPresenter implements IRecommentPresenter {
         return sInstanse;
     }
 
-
-
     /**
      * 获取推荐内容，猜你喜欢专辑数据
      */
-    private void getRecommendData() {
+    @Override
+    public void getRecommendList() {
+        updateLoading();//
         Map<String, String> map = new HashMap<String, String>();
         //一页获取多少条
         map.put(DTransferConstants.LIKE_COUNT, Constants.RECOMMEND_COUNT + "");// 20
@@ -67,26 +64,36 @@ public class RecommendPresenter implements IRecommentPresenter {
             public void onError(int i, String s) {
                 Log.e(TAG, "error --> " + i  );
                 Log.e(TAG, "errorMsg --> " + s  );
+                handlerError();
             }
         });
     }
 
-
     private void handlerRecommendResult(List<Album> albumList) {
-        //通知UI更新
-        if (mCallbacks != null){
-            for (IRecommendViewCallback callback : mCallbacks){
-                callback.onRecommendListLoaded(albumList);
+        if (albumList != null){
+            if (albumList.size() == 0) {
+                for (IRecommendViewCallback callback : mCallbacks){
+                    callback.onEmpty();//
+                }
+            }else { //通知UI更新
+                for (IRecommendViewCallback callback : mCallbacks){
+                    callback.onRecommendListLoaded(albumList);//在RecommendFragment中实现内容
+                }
             }
         }
-
     }
 
-
-    @Override
-    public void getRecommendList() {
-        getRecommendData();
-
+    private void updateLoading(){
+        for (IRecommendViewCallback callback : mCallbacks){
+            callback.onLoading();//在RecommendFragment中实现内容
+        }
+    }
+    private void handlerError() {
+        if (mCallbacks != null){
+            for (IRecommendViewCallback callback : mCallbacks){
+                callback.onNetworkError();//
+            }
+        }
     }
 
     @Override

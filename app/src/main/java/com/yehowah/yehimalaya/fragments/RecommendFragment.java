@@ -12,6 +12,7 @@ import com.yehowah.yehimalaya.adapters.RecommendListAdapter;
 import com.yehowah.yehimalaya.base.BaseFragment;
 import com.yehowah.yehimalaya.interfaces.IRecommendViewCallback;
 import com.yehowah.yehimalaya.presenters.RecommendPresenter;
+import com.yehowah.yehimalaya.views.UILoader;
 
 import net.lucode.hackware.magicindicator.buildins.UIUtil;
 
@@ -28,6 +29,7 @@ public class RecommendFragment extends BaseFragment implements IRecommendViewCal
     private  RecyclerView recommendRv;
     private  RecommendListAdapter recommendListAdapter;
     private RecommendPresenter mRecommendPresenter;
+    private  UILoader uiLoader;
 
     /**
      * 执行在父类Fragment的onCreateView中
@@ -36,12 +38,35 @@ public class RecommendFragment extends BaseFragment implements IRecommendViewCal
      * @return
      */
     @Override
-    protected View onSubViewLoaded(LayoutInflater layoutInflater, ViewGroup container) {
+    protected View onSubViewLoaded(final LayoutInflater layoutInflater, ViewGroup container) {
         Log.i(TAG, "onSubViewLoaded: 获取View");
+        uiLoader = new UILoader(getContext()) {
+            @Override
+            protected View getSuccessView(ViewGroup container) {
+                Log.i(TAG, "getSuccessView: 网络没有问题，进行加载数据 ");
+                return createSuccessView(layoutInflater,container);
+            }
+        };
+
+//        getRecommendData();//获取数据
+        //获取到逻辑层的对象
+        mRecommendPresenter = RecommendPresenter.getInstance();
+        //先要设置通知接口的注册
+        mRecommendPresenter.registerViewCallBack(this);
+        //获取推荐列表
+        mRecommendPresenter.getRecommendList();
+
+        //android 不允许重复绑定view
+        if (uiLoader.getParent() instanceof ViewGroup){
+            ((ViewGroup)uiLoader.getParent()).removeView(uiLoader);
+        }
+        //返回view
+        return uiLoader;//rootView修改成uiLoader
+    }
+
+    private View createSuccessView(LayoutInflater layoutInflater, ViewGroup container) {
         //获取View，加载
         rootView = layoutInflater.inflate(R.layout.fragment_recommend,container,false);
-
-
         //设置RecyclerView 使用管理器
         recommendRv = rootView.findViewById(R.id.recommend_list);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
@@ -61,35 +86,41 @@ public class RecommendFragment extends BaseFragment implements IRecommendViewCal
         //适配器
         recommendListAdapter = new RecommendListAdapter();
         recommendRv.setAdapter(recommendListAdapter);
-
-
-
-//        getRecommendData();//获取数据
-        //获取到逻辑层的对象
-        mRecommendPresenter = RecommendPresenter.getInstance();
-        //先要设置通知接口的注册
-        mRecommendPresenter.registerViewCallBack(this);
-        //获取推荐列表
-        mRecommendPresenter.getRecommendList();
-
-        //返回view
         return rootView;
     }
 
 //    private void upRecommendUI(List<Album> albumList) {
 //        //把数据设置给适配器，并且更新
 //        recommendListAdapter.setData(albumList);
-//
-//
 //    }
 
 
 
     @Override
     public void onRecommendListLoaded(List<Album> result) {
+        Log.i(TAG, "onRecommendListLoaded: 成功");
+        uiLoader.updateStatus(UILoader.UIStatus.SUCCESS);
         //当获取到推荐内容时，这个方法就会被调用（成功）
         //数据回来将会更新UI
         recommendListAdapter.setData(result);
+    }
+
+    @Override
+    public void onNetworkError() {
+        Log.i(TAG, "onNetworkError: ");
+        uiLoader.updateStatus(UILoader.UIStatus.NETWORK_ERROR);
+    }
+
+    @Override
+    public void onEmpty() {
+        Log.i(TAG, "onEmpty: ");
+        uiLoader.updateStatus(UILoader.UIStatus.EMPTY);
+    }
+
+    @Override
+    public void onLoading() {
+        Log.i(TAG, "onLoading: ");
+        uiLoader.updateStatus(UILoader.UIStatus.LOADING);
     }
 
     @Override
