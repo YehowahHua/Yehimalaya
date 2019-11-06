@@ -22,7 +22,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-public class RecommendFragment extends BaseFragment implements IRecommendViewCallback {
+public class RecommendFragment extends BaseFragment implements IRecommendViewCallback, UILoader.OnRetryClickListener {
     private static final String TAG = "RecommendFragment";
 
     private  View rootView;
@@ -60,6 +60,10 @@ public class RecommendFragment extends BaseFragment implements IRecommendViewCal
         if (uiLoader.getParent() instanceof ViewGroup){
             ((ViewGroup)uiLoader.getParent()).removeView(uiLoader);
         }
+
+        //利用接口点击事件，进行重新获取网络
+        uiLoader.setOnRetryClickListener(this);
+
         //返回view
         return uiLoader;//rootView修改成uiLoader
     }
@@ -141,5 +145,14 @@ public class RecommendFragment extends BaseFragment implements IRecommendViewCal
             mRecommendPresenter.unregisterViewCallBack(this);
         }
 
+    }
+
+    @Override
+    public void onRetryClick() {
+        //网络不佳时，用户点击重试，进入
+        if (mRecommendPresenter != null){
+            //重新获取数据
+            mRecommendPresenter.getRecommendList();
+        }
     }
 }
